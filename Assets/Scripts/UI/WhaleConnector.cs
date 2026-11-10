@@ -29,11 +29,9 @@ public class WhaleConnector : MonoBehaviour {
     void Awake() {
 
         currentTimeStepDelta = Time.fixedDeltaTime;
-        // attach reset function to events
+        // sub
         Scrubber.OnRestart += Reset;
         ControlHints.OnUnstick += Reset;
-        
-        // attach whale pause/play to scrubber btns
         Scrubber.OnPause += PauseWhale;
         Scrubber.OnPlay += PlayWhale;
     }
@@ -73,11 +71,12 @@ public class WhaleConnector : MonoBehaviour {
      */
     public void Reset() {
         OnReset?.Invoke();
-        if (whaleController) {
+        if (SceneManager.GetStateMode() == StateMode.FREESWIM) {
             whaleController.resetWhalePosition();
-        }
-        if (whaleDriver) {
-            whaleDriver.OnResetEvent();
+        } else {
+            if (whaleDriver) {
+                whaleDriver.OnResetEvent();
+            }
         }
     }
     

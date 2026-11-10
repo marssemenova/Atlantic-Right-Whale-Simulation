@@ -528,7 +528,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3810921375150859007, guid: 6727975dae4423f4195bbc4f9bc59cac, type: 3}
       propertyPath: m_Name
-      value: Sci_Whale_Model
+      value: PublicWhale
       objectReference: {fileID: 0}
     - target: {fileID: 3871935934165055072, guid: 6727975dae4423f4195bbc4f9bc59cac, type: 3}
       propertyPath: m_Layer

@@ -15,8 +15,8 @@ public class TogglesManager : MonoBehaviour {
     [SerializeField] private Button toggleDragBtn;
     [SerializeField] private Button toggleStressBtn;
     [SerializeField] private Button togglePathBtn;
-    // path params
-    [Header("Path Parameters")]
+    // path dependencies
+    [Header("Path Dependencies")]
     [SerializeField] private WhaleTrail whaleTrail;
     
     // events

@@ -1,67 +1,63 @@
-using openplx.Physics3D.Interactions;
-using Unity.Mathematics.Geometry;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
-public enum CameraState {
+public enum StateCamera {
     ORBIT,
     FREE,
     POV,
 }
 
-public class CameraController : MonoBehaviour{
+public class CameraManager : MonoBehaviour{
     [Header("Free Cam")]
-    public float moveSpeed = 25f;
-    public float fastSpeed = 35f;
-    public float sensitivity = 1.5f;
+    [SerializeField] private float moveSpeedRef = 25f;
+    private static float moveSpeed;
+    [SerializeField] private float fastSpeedRef = 35f;
+    private static float fastSpeed;
+    [SerializeField] private float sensitivityRef = 1.5f;
+    private static float sensitivity;
+
 
     [Header("Orbit")]
-    public Transform orbitTarget;
-    public float orbitDistance = 20f;
-    public float orbitSensitivity = 1.5f;
+    [SerializeField] private Transform orbitTargetRef;
+    private static Transform orbitTarget;
 
-    CameraControls controls;
+    [SerializeField] private float orbitDistanceRef = 20f;
+    private static float orbitDistance;
+
+    [SerializeField] private float orbitSensitivityRef = 1.5f;
+    private static float orbitSensitivity;
+
+    [Header("POV")]
+    [SerializeField] private GameObject POVTargetRef;
+    private static GameObject POVTarget;
+
+    // input
     Vector2 moveInput;
     Vector2 lookInput;
     Vector2 upDownInput;
-
-    bool sprinting;
+    bool sprinting = false; // TODO?
+    
     float yaw;
     float pitch;
-    [SerializeField] bool rotationLocked;
-    [SerializeField] GameObject POVTarget;
-    bool freeCamReset;
+    static bool rotationLocked;
+    static bool freeCamReset;
     
-    CameraState state;
+    private static StateCamera state;
     
     public delegate void CamSwitchEvent(int index); // TODO: should be passing CameraState or smth instead for uniformity 
 
     public static event CamSwitchEvent OnCamSwitch;
 
-    bool forceLock;
+    static bool forceLock;
 
-    void Awake() {
-        controls = new CameraControls();
-
-        controls.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
-        controls.Player.Move.canceled += ctx => moveInput = Vector2.zero;
-
-        controls.Player.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
-        controls.Player.Look.canceled += ctx => lookInput = Vector2.zero;
-
-        controls.Player.UpDown.performed += ctx => upDownInput = ctx.ReadValue<Vector2>();
-        controls.Player.UpDown.canceled += ctx => upDownInput = Vector2.zero;
-
-        controls.Player.Sprint.performed += ctx => sprinting = true;
-        controls.Player.Sprint.canceled += ctx => sprinting = false;
-    }
-    
-    void OnEnable() {
-        controls.Enable();  
-    } 
-    void OnDisable(){
-        controls.Disable();
+    private void Awake() {
+        // transfer editor input to vars
+        moveSpeed = moveSpeedRef;
+        fastSpeed = fastSpeedRef;
+        sensitivity = sensitivityRef;
+        orbitTarget = orbitTargetRef;
+        orbitDistance = orbitDistanceRef;
+        orbitSensitivity = orbitSensitivityRef;
+        POVTarget = POVTargetRef;
     }
 
     void Start(){
@@ -70,26 +66,26 @@ public class CameraController : MonoBehaviour{
         pitch = transform.eulerAngles.x;
     }
 
-    public void SetForceLock(bool on){
+    public static void SetForceLock(bool on){
         forceLock = on;
     }
 
-   public void lockUnLockCamera() {
+   public static void lockUnLockCamera() {
         rotationLocked = !rotationLocked;
     }
 
 
-    public void changeToCam(int index) {
+    public static void changeToCam(int index) {
         rotationLocked = false;
         switch (index) {
             case 1:
-                state = CameraState.ORBIT;
+                state = StateCamera.ORBIT;
                 break;
             case 2:
-                state = CameraState.FREE;
+                state = StateCamera.FREE;
                 break;
             case 3:
-                state = CameraState.POV;
+                state = StateCamera.POV;
                 break;
         }
         
@@ -99,12 +95,16 @@ public class CameraController : MonoBehaviour{
     void Update() {
         if(forceLock) return;
         
+        moveInput = InputManager.GetInputMove();
+        lookInput = InputManager.GetInputLook();
+        upDownInput = InputManager.GetInputUpDown();
+        
         switch (state) {
-            case CameraState.ORBIT: {
+            case StateCamera.ORBIT: {
                 UpdateOrbit();
                 break;
             }
-            case CameraState.FREE: {
+            case StateCamera.FREE: {
                 UpdateFreeCam();
                 // if the free cam reset is pressed, set pos/rot to pov cam
                 if (freeCamReset){
@@ -113,7 +113,7 @@ public class CameraController : MonoBehaviour{
                 }
                 break;
             }
-            case CameraState.POV: {
+            case StateCamera.POV: {
                 UpdatePOVCam();
                 break;
             }
@@ -121,12 +121,12 @@ public class CameraController : MonoBehaviour{
     }
 
 
-    void UpdatePOVCam() {
+    private void UpdatePOVCam() {
         transform.position = POVTarget.transform.position;
         transform.rotation = Quaternion.LookRotation(POVTarget.transform.parent.rotation * Vector3.forward);
     }
 
-    void UpdateFreeCam(){
+    private void UpdateFreeCam(){
         // rotate with look input 
         yaw += lookInput.x * sensitivity;
         pitch -= lookInput.y * sensitivity;
@@ -140,7 +140,8 @@ public class CameraController : MonoBehaviour{
                         transform.up * upDownInput.y;
         transform.position += move * speed * Time.unscaledDeltaTime; // TODO: use smth else bc time is set to 0 on pause 
     }
-    void UpdateOrbit(){
+    
+    private void UpdateOrbit(){
         // If no target, do nothing
         if (orbitTarget == null) return;
 
@@ -170,11 +171,12 @@ public class CameraController : MonoBehaviour{
     }
 
 
-    public void resetFreeCam()
-    {
+    public static void resetFreeCam() {
         freeCamReset = true;
     }
 
-
+    public static StateCamera GetStateCamera() {
+        return state;
+    }
 
 }
